@@ -41,9 +41,8 @@ Contributions are welcome! Feel free to:
 This project is licensed under the MIT License.
 
 *Contact*
-- **Author**: [H LEYASI](https://github.com/your-)
-- **Email**: your-email@example.com
+- Author: [H LEYASI](https://github.com/your-Leyasri)
+- Email: mukhundsai@gmail.com
 
----
 
 Let me know if you'd like help writing any specific sections or improving the structure! 😊
