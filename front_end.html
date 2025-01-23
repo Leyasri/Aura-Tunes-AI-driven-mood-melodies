@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facial Mood Detection & Song Suggestion</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script> <!-- face-api.js for facial recognition -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f9;
+    }
+    .video-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .video-container video {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    .result-box {
+      margin-top: 20px;
+    }
+    #mood {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #song {
+      font-size: 20px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Facial Mood Detection & Song Suggestion</h1>
+  
+  <!-- Video Stream for Webcam -->
+  <div class="video-container">
+    <video id="video" width="640" height="480" autoplay></video>
+  </div>
+
+  <!-- Mood and Song Result -->
+  <div class="result-box">
+    <h2>Your Detected Mood: <span id="mood">None</span></h2>
+    <h3>Suggested Song: <span id="song">None</span></h3>
+  </div>
+
+  <script>
+    // Initialize face-api.js and load models
+    async function setupFaceAPI() {
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+      await faceapi.nets.faceExpressionNet.loadFromUri('/models');
+      startVideo();
+    }
+
+    // Start the webcam video stream
+    function startVideo() {
+      const video = document.getElementById('video');
+      navigator.mediaDevices.getUserMedia({ video: {} })
+        .then(stream => {
+          video.srcObject = stream;
+        })
+        .catch(err => console.error("Error accessing webcam: ", err));
+    }
+
+    // Detect mood using face-api.js
+    async function detectMood() {
+      const video = document.getElementById('video');
+      const detections = await faceapi.detectAllFaces(video)
+        .withFaceExpressions();
+      
+      if (detections.length > 0) {
+        const expressions = detections[0].expressions;
+        const dominantEmotion = getDominantEmotion(expressions);
+        
+        // Display the detected mood
+        document.getElementById('mood').innerText = dominantEmotion;
+        
+        // Fetch song suggestion from the backend based on mood
+        fetchSongSuggestion(dominantEmotion);
+      }
+
+      // Continuously detect mood
+      setTimeout(detectMood, 100);
+    }
+
+    // Helper function to get the dominant emotion
+    function getDominantEmotion(expressions) {
+      const emotions = Object.keys(expressions);
+      let maxEmotion = emotions[0];
+      let maxScore = expressions[maxEmotion];
+
+      emotions.forEach(emotion => {
+        if (expressions[emotion] > maxScore) {
+          maxEmotion = emotion;
+          maxScore = expressions[emotion];
+        }
+      });
+
+      return maxEmotion;
+    }
+
+    // Fetch song suggestion from the backend API
+    function fetchSongSuggestion(mood) {
+      fetch(`/suggest_song?mood=${mood}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('song').innerText = data.song;
+        })
+        .catch(error => console.error("Error fetching song suggestion:", error));
+    }
+
+    // Load models and start mood detection
+    setupFaceAPI();
+    detectMood();
+  </script>
+</body>
+</html>
